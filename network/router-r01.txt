@@ -1,0 +1,60 @@
+! =====================================================================
+! R01 -- Cisco 2911, router-on-a-stick
+!
+! One physical link to SW01, split into two 802.1Q subinterfaces so the
+! router can route between VLAN 10 and VLAN 20.
+!
+! IMPORTANT -- pick ONE DHCP design, not both:
+!   Option A: the router hands out addresses (ip dhcp pool below)
+!   Option B: DC01 hands out addresses (ip helper-address below)
+! Running both causes duplicate/conflicting leases. Option B matches the
+! Windows Server lab, so Option A is commented out.
+! =====================================================================
+
+enable
+configure terminal
+
+hostname R01
+no ip domain-lookup
+
+! --- Physical interface must be up before subinterfaces work ----------
+interface GigabitEthernet0/0
+ description Trunk to SW01
+ no ip address
+ no shutdown
+exit
+
+! --- VLAN 10 : Servers -----------------------------------------------
+interface GigabitEthernet0/0.10
+ description Servers - VLAN 10 gateway
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+exit
+
+! --- VLAN 20 : Clients -----------------------------------------------
+interface GigabitEthernet0/0.20
+ description Clients - VLAN 20 gateway
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+ ! Forward DHCP broadcasts from VLAN 20 to the Windows DHCP server in VLAN 10.
+ ! Without this line, clients in VLAN 20 never get a lease, because DHCP
+ ! DISCOVER is a broadcast and routers do not forward broadcasts.
+ ip helper-address 192.168.10.10
+exit
+
+! --- Option A (DISABLED) : DHCP on the router -------------------------
+! ip dhcp excluded-address 192.168.20.1 192.168.20.99
+! ip dhcp pool CLIENTS
+!  network 192.168.20.0 255.255.255.0
+!  default-router 192.168.20.1
+!  dns-server 192.168.10.10
+!  domain-name lab.local
+! exit
+
+end
+write memory
+
+! --- Verification ----------------------------------------------------
+! show ip interface brief
+! show ip route
+! show vlans

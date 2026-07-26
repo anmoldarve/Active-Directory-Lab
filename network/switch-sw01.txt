@@ -1,0 +1,59 @@
+! =====================================================================
+! SW01 -- Cisco 2960 access switch
+! Two VLANs, 802.1Q trunk up to the router for inter-VLAN routing.
+!
+! Note: the 2960 is dot1q-only, so "switchport trunk encapsulation"
+! is not available on this platform. On a 3560 you would need it.
+! =====================================================================
+
+enable
+configure terminal
+
+hostname SW01
+no ip domain-lookup
+
+! --- VLANs -----------------------------------------------------------
+vlan 10
+ name SERVERS
+vlan 20
+ name CLIENTS
+exit
+
+! --- Access port to DC01 ---------------------------------------------
+interface FastEthernet0/1
+ description DC01 - domain controller
+ switchport mode access
+ switchport access vlan 10
+ spanning-tree portfast
+exit
+
+! --- Access port to PC01 ---------------------------------------------
+interface FastEthernet0/2
+ description PC01 - client workstation
+ switchport mode access
+ switchport access vlan 20
+ spanning-tree portfast
+exit
+
+! --- Trunk to R01 ----------------------------------------------------
+interface GigabitEthernet0/1
+ description Trunk to R01 - carries VLAN 10 and 20
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20
+exit
+
+! --- Management ------------------------------------------------------
+interface vlan 10
+ description Switch management address
+ ip address 192.168.10.2 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.10.1
+
+end
+write memory
+
+! --- Verification ----------------------------------------------------
+! show vlan brief
+! show interfaces trunk
+! show interfaces status
