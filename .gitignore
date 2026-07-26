@@ -1,0 +1,22 @@
+# Never commit these
+*.pem
+*.key
+*.pfx
+credentials.csv
+secrets.*
+*.env
+
+# Lab exports that may contain machine detail
+*.vbox
+*.vdi
+*.vmdk
+*.vhdx
+
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
